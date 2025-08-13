@@ -295,17 +295,6 @@
         // --- 실시간 점성학 에너지 분석기 (API 연동 준비) ---
         let currentAstrologicalEnergy = { total: 0 };
         
-        // --- 1. 가상 API (백엔드 서버 구축 전 임시 데이터 생성기) ---
-        async function fetchVirtualAstrologicalData() {
-            return new Promise(resolve => {
-                const now = new Date();
-                const totalSeconds = now.getTime() / 1000;
-                // 복잡한 수학 공식을 사용하여 현실적인 데이터 흐름을 시뮬레이션합니다.
-                const score = Math.sin(totalSeconds / 300) * 40 + Math.cos(totalSeconds / 1500) * 30 + Math.sin(totalSeconds / 5000) * 30;
-                resolve({ totalScore: Math.round(score) });
-            });
-        }
-        
         // --- 2. 실제 API 호출 함수 (백엔드 서버 구축 후 이 부분을 사용) ---
         async function fetchRealAstrologicalData() {
             try {
@@ -329,9 +318,9 @@
         }
 
         async function updateAstrologicalEnergy() {
-            // 현재는 가상 API를 사용합니다. 백엔드 구축 후 아래 한 줄만 바꾸면 됩니다.
-            const astroData = await fetchVirtualAstrologicalData(); 
-            // const astroData = await fetchRealAstrologicalData(); // <--- 이 줄로 교체!
+            // 백엔드 구축 후에는 fetchRealAstrologicalData()를 호출합니다.
+            // 현재는 임시 데이터를 사용하지 않고, 실제 API 호출을 시도하도록 코드를 수정합니다.
+            const astroData = await fetchRealAstrologicalData(); 
 
             currentAstrologicalEnergy.total = astroData.totalScore;
             
@@ -339,7 +328,7 @@
             if (astroEl) astroEl.textContent = formatPower(currentAstrologicalEnergy.total);
         }
         
-        setInterval(updateAstrologicalEnergy, 5000);
+        setInterval(updateAstrologicalEnergy, 60000); // 1분마다 업데이트
 
         // --- 64괘 데이터베이스 ---
         const HEXAGRAM_DB = {
@@ -733,4 +722,4 @@
         });
     </script>
 </body>
-</ht
+</html>
