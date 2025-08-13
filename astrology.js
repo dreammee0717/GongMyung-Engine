@@ -3,6 +3,16 @@ const fetch = require('node-fetch');
 exports.handler = async function(event, context) {
     const API_KEY = process.env.ASTROLOGY_API_KEY;
     const USER_ID = process.env.ASTROLOGY_USER_ID;
+
+    // --- 문제 진단 코드 시작 ---
+    if (!API_KEY || !USER_ID) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: "API 키 또는 User ID가 Netlify에 설정되지 않았습니다." })
+        };
+    }
+    // --- 문제 진단 코드 끝 ---
+
     const API_ENDPOINT = 'https://json.astrologyapi.com/v1/planets';
 
     const now = new Date();
@@ -28,12 +38,14 @@ exports.handler = async function(event, context) {
         });
 
         if (!response.ok) {
-            return { statusCode: response.status, body: 'API 서버 오류' };
+            const errorBody = await response.text();
+            console.error("API 서버 오류:", errorBody);
+            return { statusCode: response.status, body: JSON.stringify({ error: 'API 서버에서 오류가 발생했습니다.' }) };
         }
 
         const planetData = await response.json();
-        
-        // 행성 위치 추출
+
+        let aspectScore = 0;
         const positions = {};
         const majorPlanets = ['Sun', 'Moon', 'Mars', 'Jupiter', 'Saturn', 'Mercury', 'Venus'];
         planetData.forEach(p => {
@@ -42,8 +54,6 @@ exports.handler = async function(event, context) {
             }
         });
 
-        // 각도 계산
-        let aspectScore = 0;
         const planets = Object.keys(positions);
         for (let i = 0; i < planets.length; i++) {
             for (let j = i + 1; j < planets.length; j++) {
@@ -64,6 +74,7 @@ exports.handler = async function(event, context) {
         };
 
     } catch (error) {
-        return { statusCode: 500, body: error.toString() };
+        console.error("함수 실행 오류:", error);
+        return { statusCode: 500, body: JSON.stringify({ error: error.toString() }) };
     }
 };
