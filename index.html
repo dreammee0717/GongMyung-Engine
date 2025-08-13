@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>공명(共鳴) - 최종본</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --primary-color: #03dac6;
+            --player-color: #42a5f5;
+            --banker-color: #ef5350;
+            --tie-color: #66bb6a;
+            --astro-color: #c792ea;
+            --button-bg: #333333;
+            --button-hover: #444444;
+            --border-color: #444444;
+            --selected-border: #ffffff;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 384px;
+            height: 100%;
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        h2, h3 {
+            font-size: 0.8rem;
+            margin: 0 0 5px 0;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        .info-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .info-box {
+            background-color: var(--button-bg);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-content {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        #history-section {
+            margin-bottom: 12px;
+        }
+
+        #history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        #stats {
+            font-size: 0.8rem;
+        }
+
+        #history-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 42px);
+            gap: 4px;
+            background-color: var(--button-bg);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .grid-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--container-bg);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+            line-height: 1.2;
+        }
+        
+        .grid-item .winner-icon {
+            font-size: 1rem;
+        }
+
+        .history-index {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 0.6rem;
+            color: var(--text-color);
+            opacity: 0.4;
+        }
+
+        #input-section {
+            margin-top: auto;
+            background-color: var(--button-bg);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+        
+        .score-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .score-keypad {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 4px;
+        }
+        .score-keypad-label {
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+            border: 2px solid transparent;
+        }
+
+        .btn-winner { flex: 1; font-weight: bold; }
+        .btn-player { background-color: var(--player-color); color: #fff; }
+        .btn-banker { background-color: var(--banker-color); color: #fff; }
+        .btn-tie { background-color: var(--tie-color); color: #fff; }
+
+        .btn-active {
+            border-color: var(--selected-border) !important;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+
+        #analyze-btn {
+            width: 100%;
+            margin-top: 8px;
+            background-color: var(--primary-color);
+            color: #000;
+            font-weight: bold;
+            padding: 14px;
+        }
+
+        #analyze-btn:disabled {
+            background-color: var(--button-hover);
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
+        #reset-btn {
+            font-size: 0.7rem;
+            padding: 5px 8px;
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* 모달 */
+        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+        .modal-content { background-color: var(--container-bg); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color); width: 80%; max-width: 350px; }
+        .modal-btn { padding: 10px 20px; margin: 10px; border-radius: 5px; cursor: pointer; border: none; font-size: 16px; color: white; }
+        #edit-btn { background-color: var(--player-color); }
+        #delete-btn { background-color: var(--banker-color); }
+        #cancel-btn { background-color: var(--button-bg); }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>공명(共鳴)</h1>
+        </header>
+
+        <div class="info-container">
+            <div class="info-box">
+                <h2>해오의 추천</h2>
+                <div id="recommendation" class="info-content">대기중</div>
+            </div>
+            <div class="info-box">
+                <h2>현재 괘</h2>
+                <div id="current-hexagram" class="info-content" style="font-size: 0.8rem;">-</div>
+            </div>
+            <div class="info-box">
+                <h2>우주 엔트로피</h2>
+                <div id="astrological-influence" class="info-content" style="color: var(--astro-color);">계산중...</div>
+            </div>
+        </div>
+
+        <section id="history-section">
+            <div id="history-header">
+                 <h2>게임 기록 (최근 10개)</h2>
+                 <div id="stats">성공률: -% (0/0)</div>
+                 <button id="reset-btn">기록 초기화</button>
+            </div>
+            <div id="history-grid"></div>
+        </section>
+
+        <section id="input-section">
+             <h3>1. 승자 선택</h3>
+            <div class="input-row">
+                <button class="btn btn-winner btn-player" data-type="winner" data-value="P">플레이어</button>
+                <button class="btn btn-winner btn-banker" data-type="winner" data-value="B">뱅커</button>
+                <button class="btn btn-winner btn-tie" data-type="winner" data-value="T">타이</button>
+            </div>
+             <h3>2. 점수 선택</h3>
+             <div class="score-input-container">
+                <div>
+                    <div class="score-keypad-label" style="color: var(--player-color);">플레이어 점수</div>
+                    <div id="player-keypad" class="score-keypad"></div>
+                </div>
+                 <div>
+                    <div class="score-keypad-label" style="color: var(--banker-color);">뱅커 점수</div>
+                    <div id="banker-keypad" class="score-keypad"></div>
+                </div>
+             </div>
+            <button id="analyze-btn" class="btn" disabled>입력 & 분석</button>
+        </section>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <p>선택한 기록을 어떻게 할까?</p>
+            <p id="modal-info" style="font-weight: bold; margin-bottom: 20px;"></p>
+            <button id="edit-btn" class="modal-btn">수정</button>
+            <button id="delete-btn" class="modal-btn">삭제</button>
+            <button id="cancel-btn" class="modal-btn">취소</button>
+             <p style="font-size: 12px; color: #aaa; margin-top: 15px;">*수정/삭제 시 아카이브 엔진이 모든 데이터를 재계산합니다.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- 실시간 점성학 에너지 분석기 (API 연동 준비) ---
+        let currentAstrologicalEnergy = { total: 0 };
+        
+        // --- 1. 가상 API (백엔드 서버 구축 전 임시 데이터 생성기) ---
+        async function fetchVirtualAstrologicalData() {
+            return new Promise(resolve => {
+                const now = new Date();
+                const totalSeconds = now.getTime() / 1000;
+                // 복잡한 수학 공식을 사용하여 현실적인 데이터 흐름을 시뮬레이션합니다.
+                const score = Math.sin(totalSeconds / 300) * 40 + Math.cos(totalSeconds / 1500) * 30 + Math.sin(totalSeconds / 5000) * 30;
+                resolve({ totalScore: Math.round(score) });
+            });
+        }
+        
+        // --- 2. 실제 API 호출 함수 (백엔드 서버 구축 후 이 부분을 사용) ---
+        async function fetchRealAstrologicalData() {
+            try {
+                // Netlify에 올린 우리 '비서 프로그램'의 주소
+                const response = await fetch('/.netlify/functions/astrology');
+                if (!response.ok) {
+                    console.error("비서 서버 응답 오류");
+                    return { totalScore: 0 };
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error("비서 서버 연결 오류:", error);
+                return { totalScore: 0 };
+            }
+        }
+
+        function formatPower(power) {
+            const rounded = Math.round(power);
+            return rounded > 0 ? `+${rounded}` : rounded;
+        }
+
+        async function updateAstrologicalEnergy() {
+            // 현재는 가상 API를 사용합니다. 백엔드 구축 후 아래 한 줄만 바꾸면 됩니다.
+            const astroData = await fetchVirtualAstrologicalData(); 
+            // const astroData = await fetchRealAstrologicalData(); // <--- 이 줄로 교체!
+
+            currentAstrologicalEnergy.total = astroData.totalScore;
+            
+            const astroEl = document.getElementById('astrological-influence');
+            if (astroEl) astroEl.textContent = formatPower(currentAstrologicalEnergy.total);
+        }
+        
+        setInterval(updateAstrologicalEnergy, 5000);
+
+        // --- 64괘 데이터베이스 ---
+        const HEXAGRAM_DB = {
+            "111111":{name:"중천건",energy:100},"111011":{name:"천택리",energy:55},"111101":{name:"천화동인",energy:70},"111001":{name:"천뢰무망",energy:10},"111110":{name:"천풍구",energy:-20},"111010":{name:"천수송",energy:-40},"111100":{name:"천산둔",energy:-60},"111000":{name:"천지비",energy:-80},"011111":{name:"택천쾌",energy:20},"011011":{name:"중택태",energy:85},"011101":{name:"택화혁",energy:-25},"011001":{name:"택뢰수",energy:45},"011110":{name:"택풍대과",energy:-25},"011010":{name:"택수곤",energy:-60},"011100":{name:"택산함",energy:55},"011000":{name:"택지췌",energy:40},"101111":{name:"화천대유",energy:75},"101011":{name:"화택규",energy:-45},"101101":{name:"중화리",energy:90},"101001":{name:"화뢰서합",energy:-15},"101110":{name:"화풍정",energy:50},"101010":{name:"화수미제",energy:-95},"101100":{name:"화산려",energy:-15},"101000":{name:"화지진",energy:45},"001111":{name:"뇌천대장",energy:65},"001011":{name:"뇌택귀매",energy:-30},"001101":{name:"뇌화풍",energy:50},"001001":{name:"중뢰진",energy:85},"001110":{name:"뇌풍항",energy:50},"001010":{name:"뇌수해",energy:55},"001100":{name:"뇌산소과",energy:-40},"001000":{name:"뇌지예",energy:60},"110111":{name:"풍천소축",energy:60},"110011":{name:"풍택중부",energy:75},"110101":{name:"풍화가인",energy:60},"110001":{name:"풍뢰익",energy:30},"110110":{name:"중풍손",energy:80},"110010":{name:"풍수환",energy:35},"110100":{name:"풍산점",energy:40},"110000":{name:"풍지관",energy:-50},"010111":{name:"수천수",energy:40},"010011":{name:"수택절",energy:-35},"010101":{name:"수화기제",energy:95},"010001":{name:"수뢰둔",energy:-30},"010110":{name:"수풍정",energy:60},"010010":{name:"중수감",energy:-90},"010100":{name:"수산건",energy:-55},"010000":{name:"수지비",energy:50},"100111":{name:"산천대축",energy:85},"100011":{name:"산택손",energy:-30},"100101":{name:"산화비",energy:30},"100001":{name:"산뢰이",energy:40},"100110":{name:"산풍고",energy:-30},"100010":{name:"산수몽",energy:-20},"100100":{name:"중산간",energy:-85},"100000":{name:"산지박",energy:-70},"000111":{name:"지천태",energy:80},"000011":{name:"지택림",energy:50},"000101":{name:"지화명이",energy:-65},"000001":{name:"지뢰복",energy:70},"000110":{name:"지풍승",energy:45},"000010":{name:"지수사",energy:-50},"000100":{name:"지산겸",energy:65},"000000":{name:"중지곤",energy:-100}
+        };
+
+        const gameState = { 
+            history: [], 
+            input: { winner: null, pScore: null, bScore: null }, 
+            stats: { success: 0, total: 0 },
+        };
+        let editingIndex = null;
+
+        const elements = {
+            recommendation: document.getElementById('recommendation'),
+            currentHexagram: document.getElementById('current-hexagram'),
+            astrologicalInfluence: document.getElementById('astrological-influence'),
+            historyGrid: document.getElementById('history-grid'),
+            stats: document.getElementById('stats'),
+            analyzeBtn: document.getElementById('analyze-btn'),
+            inputSection: document.getElementById('input-section'),
+            resetBtn: document.getElementById('reset-btn'),
+            modal: document.getElementById('editModal'),
+            modalInfo: document.getElementById('modal-info'),
+            editBtn: document.getElementById('edit-btn'),
+            deleteBtn: document.getElementById('delete-btn'),
+            cancelBtn: document.getElementById('cancel-btn'),
+            playerKeypad: document.getElementById('player-keypad'),
+            bankerKeypad: document.getElementById('banker-keypad'),
+        };
+
+        // --- 괘 생성 로직 (v4.3) ---
+        function gameToTrigrams(game) {
+            if (!game) return { bon: null, ji: null, changingLines: 0 };
+
+            const pScore = game.pScore;
+            const bScore = game.bScore;
+            const diff = Math.abs(pScore - bScore);
+
+            const h3 = (pScore % 2 !== 0) ? '1' : '0'; 
+            const h2 = (diff % 2 !== 0) ? '1' : '0';   
+            const h1 = (bScore % 2 !== 0) ? '1' : '0'; 
+            const bonTrigram = h3 + h2 + h1;
+
+            const changingNumbers = [6, 9];
+            const isH3Changing = changingNumbers.includes(pScore);
+            const isH2Changing = changingNumbers.includes(diff);
+            const isH1Changing = changingNumbers.includes(bScore);
+            
+            let changingLines = 0;
+            if(isH1Changing) changingLines++;
+            if(isH2Changing) changingLines++;
+            if(isH3Changing) changingLines++;
+
+            if (changingLines === 0) {
+                return { bon: bonTrigram, ji: null, changingLines: 0 };
+            }
+
+            const ji_h3 = isH3Changing ? (h3 === '1' ? '0' : '1') : h3;
+            const ji_h2 = isH2Changing ? (h2 === '1' ? '0' : '1') : h2;
+            const ji_h1 = isH1Changing ? (h1 === '1' ? '0' : '1') : h1;
+            const jiTrigram = ji_h3 + ji_h2 + ji_h1;
+
+            return { bon: bonTrigram, ji: jiTrigram, changingLines };
+        }
+
+        // --- 핵심 분석 로직 (v4.3) ---
+        function analyze(index) {
+            if (index < 3) return { prediction: null, hexagramName: '데이터 부족', status: 'Waiting' };
+
+            const t0_trigrams = gameToTrigrams(gameState.history[index]);
+            const t3_trigrams = gameToTrigrams(gameState.history[index - 3]);
+
+            const bonHexagramCode = t0_trigrams.bon + t3_trigrams.bon;
+            const bonHexagramData = HEXAGRAM_DB[bonHexagramCode];
+
+            if (!bonHexagramData) return { prediction: null, hexagramName: '괘 계산 오류', status: 'Error' };
+
+            let hexagramEnergy;
+            let jiHexagramName = '';
+            
+            const totalChangingLines = t0_trigrams.changingLines + t3_trigrams.changingLines;
+            
+            if (totalChangingLines > 0) {
+                const jiHexagramCode = (t0_trigrams.ji || t0_trigrams.bon) + (t3_trigrams.ji || t3_trigrams.bon);
+                const jiHexagramData = HEXAGRAM_DB[jiHexagramCode];
+                if (jiHexagramData) {
+                    jiHexagramName = jiHexagramData.name;
+                    let bonWeight, jiWeight;
+                    if (totalChangingLines <= 2) { bonWeight = 0.7; jiWeight = 0.3; }
+                    else if (totalChangingLines === 3) { bonWeight = 0.5; jiWeight = 0.5; }
+                    else if (totalChangingLines <= 5) { bonWeight = 0.3; jiWeight = 0.7; }
+                    else { bonWeight = 0; jiWeight = 1; }
+                    hexagramEnergy = (bonHexagramData.energy * bonWeight) + (jiHexagramData.energy * jiWeight);
+                } else {
+                    hexagramEnergy = bonHexagramData.energy;
+                }
+            } else {
+                hexagramEnergy = bonHexagramData.energy;
+            }
+            
+            const astrologyEnergy = currentAstrologicalEnergy.total;
+            const finalVectorEnergy = hexagramEnergy + astrologyEnergy;
+            
+            const { prediction } = generatePrediction(index, finalVectorEnergy);
+
+            return {
+                prediction, 
+                strength: finalVectorEnergy,
+                status: 'Analyzed',
+                hexagramName: bonHexagramData.name + (totalChangingLines > 0 ? ` -> ${jiHexagramName}` : ''),
+            };
+        }
+        
+        // 최종 예측 생성 로직
+        function findReferenceWinner(index) {
+            for (let i = index; i >= 0; i--) {
+                if (gameState.history[i].winner !== 'T') return gameState.history[i].winner;
+            }
+            return null;
+        }
+
+        function generatePrediction(index, score) {
+            const referenceWinner = findReferenceWinner(index);
+            if (referenceWinner === null) return { prediction: '보류' };
+
+            let prediction = null;
+            if (score > 0) {
+                prediction = referenceWinner;
+            } else if (score < 0) {
+                prediction = (referenceWinner === 'P') ? 'B' : 'P';
+            } else {
+                prediction = '보류';
+            }
+            
+            return { prediction };
+        }
+
+        function processNewGame(newGame) {
+            gameState.history.push(newGame);
+            const currentIndex = gameState.history.length - 1;
+            
+            updatePreviousPredictionResult(currentIndex);
+            calculateStats();
+            
+            const analysis = analyze(currentIndex);
+            gameState.history[currentIndex].analysis = analysis;
+            updateUI();
+        }
+
+        function updatePreviousPredictionResult(currentIndex) {
+            if (currentIndex > 0) {
+                const prevGame = gameState.history[currentIndex - 1];
+                const actual = gameState.history[currentIndex].winner;
+                
+                if (prevGame.analysis?.prediction) {
+                    const pred = prevGame.analysis.prediction;
+                    let isSuccess = false;
+                    if (pred === 'P/T' && (actual === 'P' || actual === 'T')) isSuccess = true;
+                    else if (pred === 'B/T' && (actual === 'B' || actual === 'T')) isSuccess = true;
+                    else if (pred === actual) isSuccess = true;
+                    
+                    if (pred === '보류' || (actual === 'T' && !pred.includes('T'))) {
+                        prevGame.result = null;
+                    } else {
+                       prevGame.result = isSuccess ? 'Success' : 'Fail';
+                    }
+                }
+            }
+        }
+
+        function recalculateState() {
+            const currentHistory = [...gameState.history];
+            gameState.history = [];
+            gameState.stats = { success: 0, total: 0 };
+
+            currentHistory.forEach(game => {
+                const cleanGame = { winner: game.winner, pScore: game.pScore, bScore: game.bScore, id: game.id, analysis: null, result: null };
+                processNewGame(cleanGame);
+            });
+            updateUI();
+        }
+
+        function calculateStats() {
+            let success = 0, fail = 0;
+            gameState.history.forEach(game => {
+                if (game.result === 'Success') success++;
+                if (game.result === 'Fail') fail++;
+            });
+            gameState.stats = {
+                success: success,
+                total: success + fail,
+            };
+        }
+
+        // --- 이벤트 핸들러 ---
+        function checkInputStatus() {
+            const { winner, pScore, bScore } = gameState.input;
+            elements.analyzeBtn.disabled = !(winner && pScore !== null && bScore !== null);
+        }
+        
+        function handleScoreClick(event) {
+            const target = event.target.closest('.btn-score');
+            if (!target) return;
+
+            const type = target.dataset.type;
+            const value = parseInt(target.dataset.value);
+            
+            const keypadId = type === 'p' ? '#player-keypad' : '#banker-keypad';
+            document.querySelectorAll(`${keypadId} .btn-score`).forEach(btn => btn.classList.remove('btn-active'));
+            target.classList.add('btn-active');
+
+            if (type === 'p') gameState.input.pScore = value;
+            if (type === 'b') gameState.input.bScore = value;
+            
+            checkInputStatus();
+        }
+
+        function handleWinnerClick(event) {
+            const target = event.target.closest('.btn-winner');
+            if (!target) return;
+            document.querySelectorAll('.btn-winner').forEach(btn => btn.classList.remove('btn-active'));
+            target.classList.add('btn-active');
+            gameState.input.winner = target.dataset.value;
+            checkInputStatus();
+        }
+
+        function handleAnalyzeClick() {
+            const { winner, pScore, bScore } = gameState.input;
+            if (winner === 'T' && pScore !== bScore) {
+                alert("타이(Tie)는 플레이어와 뱅커의 점수가 같아야 합니다.");
+                return;
+            }
+            if (winner === 'P' && pScore <= bScore) {
+                alert("플레이어 승리는 플레이어 점수가 더 높아야 합니다.");
+                return;
+            }
+             if (winner === 'B' && bScore <= pScore) {
+                alert("뱅커 승리는 뱅커 점수가 더 높아야 합니다.");
+                return;
+            }
+
+            processNewGame({ winner, pScore, bScore, id: Date.now(), analysis: null, result: null });
+            
+            // 입력 초기화
+            gameState.input = { winner: null, pScore: null, bScore: null };
+            document.querySelectorAll('.btn-active').forEach(btn => btn.classList.remove('btn-active'));
+            checkInputStatus();
+        }
+
+        function handleResetClick() {
+            if (confirm("정말 모든 기록을 초기화할까? 아카이브 엔진이 리셋된다.")) {
+                gameState.history = [];
+                recalculateState();
+            }
+        }
+
+        function handleHistoryClick(event) {
+            const target = event.target.closest('.grid-item');
+            if (!target || !target.dataset.id) return;
+            const id = parseInt(target.dataset.id);
+            editingIndex = gameState.history.findIndex(game => game.id === id);
+            if (editingIndex === -1) return;
+            const game = gameState.history[editingIndex];
+            const winnerIcon = game.winner === 'P' ? '🔵' : (game.winner === 'B' ? '🔴' : '🟢');
+            elements.modalInfo.textContent = `기록 ${editingIndex + 1}: ${winnerIcon} P:${game.pScore} B:${game.bScore}`;
+            elements.modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            elements.modal.style.display = 'none';
+            editingIndex = null;
+        }
+
+        function handleDeleteClick() {
+            if (editingIndex !== null) {
+                if (confirm("정말로 이 기록을 삭제할까? 이후 데이터가 재계산된다.")) {
+                    gameState.history.splice(editingIndex, 1);
+                    recalculateState();
+                }
+            }
+            closeModal();
+        }
+
+        function handleEditClick() {
+            alert("점수 시스템 변경으로 수정 기능이 비활성화되었습니다.");
+            closeModal();
+        }
+
+        // --- UI 업데이트 ---
+        function updateUI() {
+            updateHistoryGrid();
+            updateInfoBoxes();
+            updateStatsDisplay();
+        }
+
+        function updateHistoryGrid() {
+            elements.historyGrid.innerHTML = '';
+            const recentHistory = gameState.history.slice(-10);
+            recentHistory.forEach((game, i) => {
+                const item = document.createElement('div');
+                item.classList.add('grid-item');
+                item.dataset.id = game.id;
+                
+                const winnerIcon = game.winner === 'P' ? '🔵' : (game.winner === 'B' ? '🔴' : '🟢');
+                const indexSpan = `<span class="history-index">T-${recentHistory.length - i}</span>`;
+                
+                item.innerHTML = `${indexSpan}<span class="winner-icon">${winnerIcon}</span><span>P:${game.pScore} B:${game.bScore}</span>`;
+                elements.historyGrid.appendChild(item);
+            });
+            for (let i = recentHistory.length; i < 10; i++) {
+                const item = document.createElement('div');
+                item.classList.add('grid-item');
+                item.style.opacity = 0.1;
+                elements.historyGrid.appendChild(item);
+            }
+        }
+
+        function updateInfoBoxes() {
+            if (gameState.history.length > 0) {
+                const analysis = gameState.history[gameState.history.length - 1].analysis;
+                
+                if (analysis && analysis.status === 'Analyzed') {
+                    let predictionText = analysis.prediction || "보류";
+                    let color = 'var(--text-color)';
+                    if (predictionText.includes('P')) color = 'var(--player-color)';
+                    else if (predictionText.includes('B')) color = 'var(--banker-color)';
+                    else if (predictionText === 'T') color = 'var(--tie-color)';
+                    
+                    elements.recommendation.textContent = `${predictionText.replace('/', ' / ')} (${formatPower(analysis.strength)})`;
+                    elements.recommendation.style.color = color;
+                } else {
+                    elements.recommendation.textContent = (analysis?.status === 'Waiting') ? "데이터 부족" : "대기중";
+                    elements.recommendation.style.color = 'var(--text-color)';
+                }
+
+                if (analysis?.hexagramName) {
+                    elements.currentHexagram.innerHTML = `${analysis.hexagramName}`;
+                } else {
+                    elements.currentHexagram.textContent = "-";
+                }
+            } else {
+                elements.recommendation.textContent = "대기중";
+                elements.recommendation.style.color = 'var(--text-color)';
+                elements.currentHexagram.textContent = "-";
+            }
+        }
+
+        function updateStatsDisplay() {
+            const { success, total } = gameState.stats;
+            const rateText = total > 0 ? ((success / total) * 100).toFixed(1) : '-';
+            elements.stats.textContent = `성공률: ${rateText}% (${success}/${total})`;
+        }
+        
+        function createKeypad() {
+            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+            numbers.forEach(num => {
+                const pBtn = document.createElement('button');
+                pBtn.className = 'btn btn-score';
+                pBtn.dataset.type = 'p';
+                pBtn.dataset.value = num;
+                pBtn.textContent = num;
+                elements.playerKeypad.appendChild(pBtn);
+
+                const bBtn = document.createElement('button');
+                bBtn.className = 'btn btn-score';
+                bBtn.dataset.type = 'b';
+                bBtn.dataset.value = num;
+                bBtn.textContent = num;
+                elements.bankerKeypad.appendChild(bBtn);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            createKeypad();
+            document.querySelector('.input-row').addEventListener('click', handleWinnerClick);
+            elements.playerKeypad.addEventListener('click', handleScoreClick);
+            elements.bankerKeypad.addEventListener('click', handleScoreClick);
+            elements.analyzeBtn.addEventListener('click', handleAnalyzeClick);
+            elements.historyGrid.addEventListener('click', handleHistoryClick);
+            elements.resetBtn.addEventListener('click', handleResetClick);
+            elements.cancelBtn.addEventListener('click', closeModal);
+            elements.deleteBtn.addEventListener('click', handleDeleteClick);
+            elements.editBtn.addEventListener('click', handleEditClick);
+            window.addEventListener('click', (event) => {
+                if (event.target == elements.modal) closeModal();
+            });
+
+            updateAstrologicalEnergy();
+            updateUI();
+        });
+    </script>
+</body>
+</ht
