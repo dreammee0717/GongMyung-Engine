@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>공명(共鳴) - 아카이브 엔진 v4.5</title>
+    <title>공명(共鳴) - 최종본</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -57,10 +57,6 @@
             font-size: 1.5rem;
             color: var(--primary-color);
             margin: 0;
-        }
-        h1 span {
-            font-size: 0.8rem;
-            opacity: 0.7;
         }
         
         h2, h3 {
@@ -235,7 +231,7 @@
 <body>
     <div id="app">
         <header>
-            <h1>공명(共鳴) <span>v4.5</span></h1>
+            <h1>공명(共鳴)</h1>
         </header>
 
         <div class="info-container">
@@ -296,15 +292,15 @@
     </div>
 
     <script>
-        // --- 실시간 점성학 에너지 분석기 (API 연동 준비) ---
+        // --- 실시간 점성학 에너지 분석기 (API 연동) ---
         let currentAstrologicalEnergy = { total: 0 };
         
         async function fetchRealAstrologicalData() {
             try {
-                const url = `/.netlify/functions/astrology?t=${new Date().getTime()}`;
-                const response = await fetch(url);
+                // Netlify에 올린 '비서 프로그램'의 주소
+                const response = await fetch('/.netlify/functions/astrology', { cache: 'no-cache' });
                 if (!response.ok) {
-                    console.error("비서 서버 응답 오류");
+                    console.error("비서 서버 응답 오류:", response.statusText);
                     return { totalScore: 0 };
                 }
                 const data = await response.json();
@@ -329,9 +325,7 @@
             currentAstrologicalEnergy.total = astroData.totalScore;
             
             const astroEl = document.getElementById('astrological-influence');
-            if (astroEl) {
-                astroEl.textContent = formatPower(currentAstrologicalEnergy.total);
-            }
+            if (astroEl) astroEl.textContent = formatPower(currentAstrologicalEnergy.total);
         }
         
         setInterval(updateAstrologicalEnergy, 180000); // 3분마다 업데이트
@@ -366,32 +360,23 @@
             bankerKeypad: document.getElementById('banker-keypad'),
         };
 
-        // --- 괘 생성 로직 (v4.5) ---
+        // --- 괘 생성 로직 (v4.3) ---
         function gameToTrigrams(game) {
             if (!game) return { bon: null, ji: null, changingLines: 0 };
 
-            let winScore, loseScore;
-            if (game.winner === 'P') {
-                winScore = game.pScore;
-                loseScore = game.bScore;
-            } else if (game.winner === 'B') {
-                winScore = game.bScore;
-                loseScore = game.pScore;
-            } else { // Tie
-                winScore = game.pScore;
-                loseScore = game.bScore;
-            }
+            const pScore = game.pScore;
+            const bScore = game.bScore;
+            const diff = Math.abs(pScore - bScore);
 
-            const diff = Math.abs(winScore - loseScore);
-            const h3 = (winScore % 2 !== 0) ? '1' : '0'; // 상효: 승리점수 홀짝
-            const h2 = (diff % 2 !== 0) ? '1' : '0';     // 중효: 점수차 홀짝
-            const h1 = (loseScore % 2 !== 0) ? '1' : '0';// 하효: 패배점수 홀짝
+            const h3 = (pScore % 2 !== 0) ? '1' : '0'; 
+            const h2 = (diff % 2 !== 0) ? '1' : '0';   
+            const h1 = (bScore % 2 !== 0) ? '1' : '0'; 
             const bonTrigram = h3 + h2 + h1;
 
             const changingNumbers = [6, 9];
-            const isH3Changing = changingNumbers.includes(winScore);
+            const isH3Changing = changingNumbers.includes(pScore);
             const isH2Changing = changingNumbers.includes(diff);
-            const isH1Changing = changingNumbers.includes(loseScore);
+            const isH1Changing = changingNumbers.includes(bScore);
             
             let changingLines = 0;
             if(isH1Changing) changingLines++;
@@ -410,14 +395,14 @@
             return { bon: bonTrigram, ji: jiTrigram, changingLines };
         }
 
-        // --- 핵심 분석 로직 (v4.5) ---
+        // --- 핵심 분석 로직 (v4.3) ---
         function analyze(index) {
-            if (index < 1) return { prediction: null, hexagramName: '데이터 부족', status: 'Waiting' };
+            if (index < 3) return { prediction: null, hexagramName: '데이터 부족', status: 'Waiting' };
 
-            const t0_trigrams = gameToTrigrams(gameState.history[index]);     // 상괘
-            const t1_trigrams = gameToTrigrams(gameState.history[index - 1]); // 하괘
+            const t0_trigrams = gameToTrigrams(gameState.history[index]);
+            const t3_trigrams = gameToTrigrams(gameState.history[index - 3]);
 
-            const bonHexagramCode = t0_trigrams.bon + t1_trigrams.bon;
+            const bonHexagramCode = t0_trigrams.bon + t3_trigrams.bon;
             const bonHexagramData = HEXAGRAM_DB[bonHexagramCode];
 
             if (!bonHexagramData) return { prediction: null, hexagramName: '괘 계산 오류', status: 'Error' };
@@ -425,10 +410,10 @@
             let hexagramEnergy;
             let jiHexagramName = '';
             
-            const totalChangingLines = t0_trigrams.changingLines + t1_trigrams.changingLines;
+            const totalChangingLines = t0_trigrams.changingLines + t3_trigrams.changingLines;
             
             if (totalChangingLines > 0) {
-                const jiHexagramCode = (t0_trigrams.ji || t0_trigrams.bon) + (t1_trigrams.ji || t1_trigrams.bon);
+                const jiHexagramCode = (t0_trigrams.ji || t0_trigrams.bon) + (t3_trigrams.ji || t3_trigrams.bon);
                 const jiHexagramData = HEXAGRAM_DB[jiHexagramCode];
                 if (jiHexagramData) {
                     jiHexagramName = jiHexagramData.name;
@@ -458,7 +443,7 @@
             };
         }
         
-        // 최종 예측 생성 로직 (v4.5)
+        // 최종 예측 생성 로직
         function findReferenceWinner(index) {
             for (let i = index; i >= 0; i--) {
                 if (gameState.history[i].winner !== 'T') return gameState.history[i].winner;
@@ -476,12 +461,7 @@
             } else if (score < 0) {
                 prediction = (referenceWinner === 'P') ? 'B' : 'P';
             } else {
-                prediction = 'T';
-            }
-
-            const isTieZone = (score >= -10 && score <= 10) || score >= 110 || score <= -110;
-            if (isTieZone && prediction !== 'T' && prediction !== '보류') {
-                prediction += '/T';
+                prediction = '보류';
             }
             
             return { prediction };
